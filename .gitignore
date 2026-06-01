@@ -1,0 +1,31 @@
+# Build artifacts
+abft_gemm
+ft_sgemm
+ft_sgemm_inj
+*.o
+*.a
+
+# Reference project (cloned on demand by the comparison scripts — not redistributed)
+Fault-Tolerant-SGEMM-on-NVIDIA-GPUs/
+cuda-samples/
+
+# Regenerated figures (raw data lives in data/; plots are reproducible)
+figs/
+scripts/plots/
+scripts/profile/
+*.png
+*.eps
+*.pdf
+
+# Slurm logs
+*.out
+*.err
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

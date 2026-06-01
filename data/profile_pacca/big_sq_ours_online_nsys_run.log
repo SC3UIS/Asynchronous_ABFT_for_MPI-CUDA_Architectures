@@ -1,0 +1,39 @@
+=== ABFT GEMM (cuBLAS, online pipelined) ===
+Mode           : online  (inject=none)
+M x K x N      : 8192 x 8192 x 8192
+Process grid   : 1 x 1  (world=1)
+Frags per rank : 8
+Repeats        : 3
+Samples        : 5
+Threshold      : 1 (override)
+GPUs visible   : 1
+
+[Rank 0] 5 timed trials × 3 iters/trial
+
+========== EXPERIMENT METRICS (global) ==========
+Mode              : online / inject=none
+M x K x N         : 8192 x 8192 x 8192
+Process grid      : 1 x 1
+Frags per rank    : 8
+Total fragments   : 8
+Repeats           : 3
+Threshold used    : 1.0000
+--- Timing (worst rank) ---
+Baseline   min/med/max : 62.7259 / 62.9126 / 63.0000  ms
+Baseline   GFLOPS (med): 17476.8210  (min 17452.5650, max 17528.8412)
+Protected  min/med/max : 62.4660 / 62.6109 / 62.9695  ms
+Protected  GFLOPS (med): 17561.0312  (min 17461.0228, max 17601.7747)
+Overhead (median)      : -0.4795 %
+--- Confusion Matrix (global) ---
+TP / TN / FP / FN     : 0 / 120 / 0 / 0
+Recall                : 0.0000
+Detection precision   : 0.0000
+Correction precision  : 0.0000 %
+==================================================
+
+Collecting data...
+Generating '/tmp/nsys-user/nsys-report-2e52.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/1] [0%                          ] big_sq_ours_online.nsys-rep[1/1] [0%                          ] big_sq_ours_online.nsys-rep[1/1] [====28%                     ] big_sq_ours_online.nsys-rep[1/1] [=====30%                    ] big_sq_ours_online.nsys-rep[1/1] [=====32%                    ] big_sq_ours_online.nsys-rep[1/1] [======33%                   ] big_sq_ours_online.nsys-rep[1/1] [======34%                   ] big_sq_ours_online.nsys-rep[1/1] [======35%                   ] big_sq_ours_online.nsys-rep[1/1] [=======36%                  ] big_sq_ours_online.nsys-rep[1/1] [=======37%                  ] big_sq_ours_online.nsys-rep[1/1] [=======38%                  ] big_sq_ours_online.nsys-rep[1/1] [=======39%                  ] big_sq_ours_online.nsys-rep[1/1] [========40%                 ] big_sq_ours_online.nsys-rep[1/1] [========41%                 ] big_sq_ours_online.nsys-rep[1/1] [========42%                 ] big_sq_ours_online.nsys-rep[1/1] [=========43%                ] big_sq_ours_online.nsys-rep[1/1] [=========44%                ] big_sq_ours_online.nsys-rep[1/1] [==========49%               ] big_sq_ours_online.nsys-rep[1/1] [=============60%            ] big_sq_ours_online.nsys-rep[1/1] [================70%         ] big_sq_ours_online.nsys-rep[1/1] [===================81%      ] big_sq_ours_online.nsys-rep[1/1] [========================100%] big_sq_ours_online.nsys-rep[1/1] [========================100%] big_sq_ours_online.nsys-rep
+Generated:
+	<REPO_ROOT>/scripts/profile/big_sq_ours_online.nsys-rep

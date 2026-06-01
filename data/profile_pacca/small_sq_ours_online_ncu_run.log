@@ -1,0 +1,33 @@
+=== ABFT GEMM (cuBLAS, online pipelined) ===
+Mode           : online  (inject=none)
+M x K x N      : 1024 x 1024 x 1024
+Process grid   : 1 x 1  (world=1)
+Frags per rank : 8
+Repeats        : 3
+Samples        : 5
+Threshold      : 1 (override)
+GPUs visible   : 1
+
+[Rank 0] 5 timed trials × 3 iters/trial
+
+========== EXPERIMENT METRICS (global) ==========
+Mode              : online / inject=none
+M x K x N         : 1024 x 1024 x 1024
+Process grid      : 1 x 1
+Frags per rank    : 8
+Total fragments   : 8
+Repeats           : 3
+Threshold used    : 1.0000
+--- Timing (worst rank) ---
+Baseline   min/med/max : 1.1131 / 1.1165 / 1.1659  ms
+Baseline   GFLOPS (med): 1923.4699  (min 1841.8838, max 1929.3391)
+Protected  min/med/max : 2.1342 / 2.1527 / 2.1704  ms
+Protected  GFLOPS (med): 997.5802  (min 989.4242, max 1006.2232)
+Overhead (median)      : 92.8136 %
+--- Confusion Matrix (global) ---
+TP / TN / FP / FN     : 0 / 120 / 0 / 0
+Recall                : 0.0000
+Detection precision   : 0.0000
+Correction precision  : 0.0000 %
+==================================================
+

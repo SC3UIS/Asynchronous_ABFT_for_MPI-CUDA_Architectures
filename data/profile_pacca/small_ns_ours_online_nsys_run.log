@@ -1,0 +1,39 @@
+=== ABFT GEMM (cuBLAS, online pipelined) ===
+Mode           : online  (inject=none)
+M x K x N      : 1024 x 512 x 384
+Process grid   : 1 x 1  (world=1)
+Frags per rank : 8
+Repeats        : 3
+Samples        : 5
+Threshold      : 1 (override)
+GPUs visible   : 1
+
+[Rank 0] 5 timed trials × 3 iters/trial
+
+========== EXPERIMENT METRICS (global) ==========
+Mode              : online / inject=none
+M x K x N         : 1024 x 512 x 384
+Process grid      : 1 x 1
+Frags per rank    : 8
+Total fragments   : 8
+Repeats           : 3
+Threshold used    : 1.0000
+--- Timing (worst rank) ---
+Baseline   min/med/max : 0.2533 / 0.2540 / 0.2541  ms
+Baseline   GFLOPS (med): 1585.1260  (min 1584.8453, max 1589.6694)
+Protected  min/med/max : 0.5126 / 0.5151 / 0.5197  ms
+Protected  GFLOPS (med): 781.6328  (min 774.8352, max 785.4732)
+Overhead (median)      : 102.7968 %
+--- Confusion Matrix (global) ---
+TP / TN / FP / FN     : 0 / 120 / 0 / 0
+Recall                : 0.0000
+Detection precision   : 0.0000
+Correction precision  : 0.0000 %
+==================================================
+
+Collecting data...
+Generating '/tmp/nsys-user/nsys-report-1281.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/1] [0%                          ] small_ns_ours_online.nsys-rep[1/1] [0%                          ] small_ns_ours_online.nsys-rep[1/1] [11%                         ] small_ns_ours_online.nsys-rep[1/1] [14%                         ] small_ns_ours_online.nsys-rep[1/1] [=17%                        ] small_ns_ours_online.nsys-rep[1/1] [==18%                       ] small_ns_ours_online.nsys-rep[1/1] [==19%                       ] small_ns_ours_online.nsys-rep[1/1] [==20%                       ] small_ns_ours_online.nsys-rep[1/1] [==21%                       ] small_ns_ours_online.nsys-rep[1/1] [===22%                      ] small_ns_ours_online.nsys-rep[1/1] [===23%                      ] small_ns_ours_online.nsys-rep[1/1] [===24%                      ] small_ns_ours_online.nsys-rep[1/1] [====25%                     ] small_ns_ours_online.nsys-rep[1/1] [====26%                     ] small_ns_ours_online.nsys-rep[1/1] [====27%                     ] small_ns_ours_online.nsys-rep[1/1] [====28%                     ] small_ns_ours_online.nsys-rep[1/1] [=====29%                    ] small_ns_ours_online.nsys-rep[1/1] [=====31%                    ] small_ns_ours_online.nsys-rep[1/1] [======33%                   ] small_ns_ours_online.nsys-rep[1/1] [===============65%          ] small_ns_ours_online.nsys-rep[1/1] [========================100%] small_ns_ours_online.nsys-rep[1/1] [========================100%] small_ns_ours_online.nsys-rep
+Generated:
+	<REPO_ROOT>/scripts/profile/small_ns_ours_online.nsys-rep

@@ -1,0 +1,39 @@
+=== ABFT GEMM (cuBLAS, online pipelined) ===
+Mode           : online  (inject=none)
+M x K x N      : 1024 x 1024 x 1024
+Process grid   : 1 x 1  (world=1)
+Frags per rank : 8
+Repeats        : 3
+Samples        : 5
+Threshold      : 1 (override)
+GPUs visible   : 1
+
+[Rank 0] 5 timed trials × 3 iters/trial
+
+========== EXPERIMENT METRICS (global) ==========
+Mode              : online / inject=none
+M x K x N         : 1024 x 1024 x 1024
+Process grid      : 1 x 1
+Frags per rank    : 8
+Total fragments   : 8
+Repeats           : 3
+Threshold used    : 1.0000
+--- Timing (worst rank) ---
+Baseline   min/med/max : 0.4494 / 0.4499 / 0.4520  ms
+Baseline   GFLOPS (med): 4772.8117  (min 4750.8388, max 4778.5254)
+Protected  min/med/max : 0.5272 / 0.5357 / 0.5374  ms
+Protected  GFLOPS (med): 4008.5260  (min 3995.9627, max 4073.4014)
+Overhead (median)      : 19.0665 %
+--- Confusion Matrix (global) ---
+TP / TN / FP / FN     : 0 / 120 / 0 / 0
+Recall                : 0.0000
+Detection precision   : 0.0000
+Correction precision  : 0.0000 %
+==================================================
+
+Collecting data...
+Generating '/tmp/nsys-user/nsys-report-0de0.qdstrm'
+Press Ctrl-C to stop symbol files downloading
+[1/1] [0%                          ] small_sq_ours_online.nsys-rep[1/1] [0%                          ] small_sq_ours_online.nsys-rep[1/1] [11%                         ] small_sq_ours_online.nsys-rep[1/1] [14%                         ] small_sq_ours_online.nsys-rep[1/1] [=17%                        ] small_sq_ours_online.nsys-rep[1/1] [==18%                       ] small_sq_ours_online.nsys-rep[1/1] [==19%                       ] small_sq_ours_online.nsys-rep[1/1] [==20%                       ] small_sq_ours_online.nsys-rep[1/1] [==21%                       ] small_sq_ours_online.nsys-rep[1/1] [===22%                      ] small_sq_ours_online.nsys-rep[1/1] [===23%                      ] small_sq_ours_online.nsys-rep[1/1] [===24%                      ] small_sq_ours_online.nsys-rep[1/1] [====25%                     ] small_sq_ours_online.nsys-rep[1/1] [====26%                     ] small_sq_ours_online.nsys-rep[1/1] [====27%                     ] small_sq_ours_online.nsys-rep[1/1] [====28%                     ] small_sq_ours_online.nsys-rep[1/1] [=====29%                    ] small_sq_ours_online.nsys-rep[1/1] [=====30%                    ] small_sq_ours_online.nsys-rep[1/1] [=====31%                    ] small_sq_ours_online.nsys-rep[1/1] [======33%                   ] small_sq_ours_online.nsys-rep[1/1] [===============65%          ] small_sq_ours_online.nsys-rep[1/1] [========================100%] small_sq_ours_online.nsys-rep[1/1] [========================100%] small_sq_ours_online.nsys-rep
+Generated:
+	<REPO_ROOT>/scripts/profile/small_sq_ours_online.nsys-rep

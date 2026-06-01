@@ -1,0 +1,3 @@
+==PROF== Connected to process 425493 (<REPO_ROOT>/Fault-Tolerant-SGEMM-on-NVIDIA-GPUs/build/ft_sgemm)
+==PROF== Disconnected from process 425493
+==PROF== Report: <REPO_ROOT>/scripts/profile/small_sq_theirs_fused.ncu-rep
