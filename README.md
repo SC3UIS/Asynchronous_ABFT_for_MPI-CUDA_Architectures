@@ -18,7 +18,7 @@ Colombia.
 This project wraps an **unmodified vendor GEMM** (NVIDIA cuBLAS) in an
 online **Algorithm-Based Fault Tolerance (ABFT)** layer that detects,
 localizes, and corrects silent data corruptions in `C = A·B`. The novelty
-is *asynchronous scheduling*: the Huang–Abraham checksum verification runs
+is *asynchronous scheduling*: the checksum verification runs
 on a **second CUDA stream**, concurrent with the main compute stream, so
 the verification of one iteration is hidden behind the matrix
 multiplication of the next. The compute path is never blocked by the
