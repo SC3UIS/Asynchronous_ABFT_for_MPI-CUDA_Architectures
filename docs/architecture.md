@@ -144,6 +144,16 @@ verify_stream  : [actR_k | detect][localize_k | gated]  [actR_(k+1) | detect] ..
 compute_stream :                                         [SGEMMs of iter k+1 on dC[(k+1)%2]]
 ```
 
+The one-time input encoding (`s_A`, `e`) is issued on the same
+`verify_stream` at the start of the loop. Where it falls relative to the
+timed window is a measurement choice (`--encoding-mode`): the reported
+experiments **overlap** it with the first iteration's GEMM so its cost is
+charged to the run rather than hidden as a pre-timed step. So that this
+concurrent encode does not starve as a single thread block against a
+full-occupancy GEMM, each of its two reductions is computed in `ENC_CHUNKS`
+parallel slices and then combined (the `_part` encode kernels described in
+[source-reference.md](source-reference.md)).
+
 Implemented in [`pipeline/passes.cuh`](../src/pipeline/passes.cuh)
 (`pass_online_loop`) and [`pipeline/buffers.cuh`](../src/pipeline/buffers.cuh).
 

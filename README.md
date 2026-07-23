@@ -112,9 +112,9 @@ CSV (or profiling report), and then calls a plotter to render the figures.
 
 | Experiment | Script | Raw output (in `data/`) | Plotter |
 | ---------- | ------ | ----------------------- | ------- |
-| Dual-GPU overhead sweep (paper §4.1) | [`scripts/run_abft_felix.sbatch`](scripts/run_abft_felix.sbatch) | [`data/campaign_felix/`](data/campaign_felix/) | `scripts/plot_metrics.py` |
-| Comparison vs fused-kernel ABFT, Maxwell (§4.2) | [`scripts/run_comparison_felix.sbatch`](scripts/run_comparison_felix.sbatch) | [`data/comparison_felix/`](data/comparison_felix/) | `scripts/plot_comparison.py` |
-| Comparison vs fused-kernel ABFT, Ampere (§4.2) | [`scripts/run_comparison_pacca.sbatch`](scripts/run_comparison_pacca.sbatch) | [`data/comparison_pacca/`](data/comparison_pacca/) | `scripts/plot_comparison.py` |
+| Dual-GPU overhead sweep (paper §4.2) | [`scripts/run_abft_felix.sbatch`](scripts/run_abft_felix.sbatch) | [`data/campaign_felix/`](data/campaign_felix/) | `scripts/plot_metrics.py` |
+| Comparison vs fused-kernel ABFT, Maxwell (§4.3) | [`scripts/run_comparison_felix.sbatch`](scripts/run_comparison_felix.sbatch) | [`data/comparison_felix/`](data/comparison_felix/) | `scripts/plot_comparison.py` |
+| Comparison vs fused-kernel ABFT, Ampere (§4.3) | [`scripts/run_comparison_pacca.sbatch`](scripts/run_comparison_pacca.sbatch) | [`data/comparison_pacca/`](data/comparison_pacca/) | `scripts/plot_comparison.py` |
 | Nsight profiling: timeline + real GFLOPS (Ampere) | [`scripts/run_profile_pacca.sbatch`](scripts/run_profile_pacca.sbatch) | [`data/profile_pacca/`](data/profile_pacca/) | `scripts/plot_real_gflops.py` |
 
 Submit one with, e.g.:
@@ -146,7 +146,7 @@ A description of every data file and its columns is in
 
 ## Comparison baseline (Wu et al., ICS 2023)
 
-The §4.2 comparison is run against the fused-kernel ABFT reference of
+The §4.3 comparison is run against the fused-kernel ABFT reference of
 
 > S. Wu, Y. Zhai, J. Liu, J. Huang, Z. Jian, B. M. Wong, Z. Chen.
 > *Anatomy of High-Performance GEMM with Online Fault Tolerance on GPUs.*

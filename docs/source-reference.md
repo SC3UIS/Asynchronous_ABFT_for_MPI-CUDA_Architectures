@@ -90,8 +90,9 @@ Plain-data structs, no logic:
 - **`ExperimentConfig`** — every CLI-settable knob with its default: matrix
   dims, grid, `frags_per_rank`, `repeats`, `warmups`, `frag_cap` (the
   resilience knob), `num_samples`, `reseed_per_trial`, injection mode and
-  zone, threshold override, calibration safety factor, RNG seeds, and
-  output paths.
+  zone, threshold override, `encoding_mode` (where the input encoding sits
+  relative to the timed window: `amortized` / `timed` / `overlap`),
+  calibration safety factor, RNG seeds, and output paths.
 - **`ABFTResult` / `InjectionInfo`** — bookkeeping records for a single
   verification and a single injected fault.
 
@@ -161,7 +162,12 @@ locate row i*, then correct C_frag[i*,j*] in place
 Key kernels:
 
 - **`k_col_checksum_A` / `k_expected_row`** — the precomputed, input-only
-  quantities.
+  quantities. Each also has a chunked `_part` variant
+  (`k_col_checksum_A_part`, `k_expected_row_part`) that splits the reduction
+  across `ENC_CHUNKS` blocks into the `dEncPart` scratch, finished by
+  `k_reduce_enc_part`. The launchers take this two-phase path so the
+  encoding is not a single-block, launch-latency-bound kernel when it is
+  overlapped with a full-occupancy GEMM under `--encoding-mode overlap`.
 - **`k_actual_row`** — the only reduction on the per-iteration critical
   path.
 - **`k_detect_row`** — single-block reduction that finds the worst
@@ -215,7 +221,8 @@ Software-implemented fault injection (see [architecture.md](architecture.md)
   whole run: the cuBLAS handle, the `compute_stream` and `verify_stream`,
   the per-fragment and buffer-reuse CUDA events, the per-fragment
   `col_counts`/`col_offsets`, and all device scratch for the checksums and
-  the fault record. Because detect/localize/correct are fully
+  the fault record (including `dEncPart`, the partials buffer for the
+  chunked input encoding). Because detect/localize/correct are fully
   device-resident and the verify stream is in-order, the localization
   scratch is single-instance: fragment `k`'s locate+correct completes
   before fragment `k+1` starts.
@@ -232,9 +239,12 @@ times are directly comparable:
   records every `|actualRow − expectedRow|` so `--calibrate` can report the
   observed noise floor and a suggested `τ`.
 - **`pass_online_loop`** — the pipelined online ABFT (see
-  [architecture.md](architecture.md) §4–5). Precomputes `colSumA` and the
-  per-fragment `expectedRow` once; then, per iteration, per fragment, on
-  the verify stream gated behind `compute_done`, runs `actualRow →
+  [architecture.md](architecture.md) §4–5). Encodes `colSumA` and the
+  per-fragment `expectedRow` once, with `encoding_mode` selecting where that
+  work sits relative to the timed window (before it, inside it, or
+  overlapped on the verify stream — see [scripts-reference.md](scripts-reference.md));
+  then, per iteration, per fragment, on the verify stream gated behind
+  `compute_done`, runs `actualRow →
   k_detect_row` and (when injection is enabled) the device-gated
   localize+correct chain. Two `dC` buffers alternate by parity; iteration
   `k+2` waits on `buf_verify_done[k%2]` before overwriting that buffer.

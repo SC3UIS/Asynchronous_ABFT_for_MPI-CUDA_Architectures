@@ -39,7 +39,10 @@ Three things are deliberately matched so the comparison is fair:
 3. **Same timing protocol.** Fixed random operand pair, steady-state clocks,
    arithmetic-mean throughput (GFLOPS), with time derived as
    `t = 2·M·N·K / GFLOPS`. This matches the protocol our own binary uses
-   (see [architecture.md](architecture.md) §4).
+   (see [architecture.md](architecture.md) §4). Our online ABFT additionally
+   charges its input encoding *inside* the timed window, overlapped on the
+   verify stream (`--encoding-mode overlap`), so the reported gap hides no
+   one-time checksum-setup cost on our side.
 
 The fault model is matched as a single large additive corruption to one
 element of the output tile, on both sides.

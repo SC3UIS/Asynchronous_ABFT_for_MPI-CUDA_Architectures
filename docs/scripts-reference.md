@@ -47,6 +47,17 @@ scripts:
   the timed trials, to match the reference, whose
   `GFLOPS = 2·num_tests·MNK / total_time` is intrinsically a mean over its
   timed iterations.
+- **The input encoding is charged, not hidden.** The input-dependent
+  checksums (`colSumA`, `expectedRow`) are computed once per operand pair,
+  but every driver issues that work *inside* the timed window on
+  `verify_stream`, overlapped with the first fragment's GEMM
+  (`--encoding-mode overlap`). Each reported sample therefore pays the
+  encoding cost even though it is hidden behind the multiplication — the
+  perf runs do not amortize it away as a one-time pre-step. This is a fixed
+  `ENC_FLAG` in `run_abft_felix.sbatch` and an `ENCODING`-overridable
+  default of `overlap` in the comparison and profiling drivers; `amortized`
+  (before the window) and `timed` (inside, synced before the loop) are the
+  other two placements accepted by `--encoding-mode`.
 
 ---
 
