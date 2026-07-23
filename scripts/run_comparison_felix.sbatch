@@ -40,6 +40,8 @@ OUR_R=1
 OUR_SAMPLES=${OUR_SAMPLES:-15}
 THEIRS_SAMPLES=${THEIRS_SAMPLES:-3}
 WARMUPS=${WARMUPS:-5}
+ENCODING=${ENCODING:-overlap}
+OUR_ENC_FLAG="--encoding-mode ${ENCODING}"
 CUDA_ARCH="52"
 THEIRS_DIR="Fault-Tolerant-SGEMM-on-NVIDIA-GPUs"
 OUT_CSV="compare_all.csv"
@@ -145,7 +147,7 @@ run_shape() {
     rm -f abft_metrics_cmp.csv _ours_launch.log
     if ! srun -n 1 --gres=gpu:1 --mpi=pmix ./abft_gemm ${M} ${K} ${N} \
          --inject none --threshold ${OUR_THRESHOLD} --grid 1 1 \
-         --frags-per-rank ${OUR_F} \
+         --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} \
          --samples ${OUR_SAMPLES} --repeats ${OUR_R} \
          --warmups ${WU} --csv abft_metrics_cmp.csv > /dev/null 2> _ours_launch.log; then
         echo "  WARNING: ours(none) launch failed ${M}x${K}x${N} (stderr below):"
@@ -165,7 +167,7 @@ run_shape() {
     rm -f abft_metrics_inj.csv
     if srun -n 1 --gres=gpu:1 --mpi=pmix ./abft_gemm ${M} ${K} ${N} \
          --inject add --threshold ${OUR_THRESHOLD} --grid 1 1 \
-         --frags-per-rank ${OUR_F} \
+         --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} \
          --samples ${OUR_SAMPLES} --repeats ${OUR_R} \
          --warmups ${WU} --csv abft_metrics_inj.csv > /dev/null 2>> _ours_launch.log; then
         local oi_g oi_t

@@ -17,6 +17,14 @@ scripts/profile/
 *.eps
 *.pdf
 
+# Published result images kept under data/ are tracked deliberately
+# (overhead figures per platform, and the Nsight timeline screenshots).
+!data/**/*.png
+
+# Stale duplicates from an earlier layout (figures now live under data/)
+/docs/overhead_figures/
+/docs/show_profiling/
+
 # Slurm logs
 *.out
 *.err

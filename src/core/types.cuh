@@ -2,6 +2,7 @@
 
 #include "common.cuh"
 
+
 struct Grid2D {
     int Pr;
     int Pc;
@@ -22,6 +23,7 @@ struct ABFTResult {
     float golden_value     = 0.0f;
 };
 
+
 struct ExperimentConfig {
     int         M = 1024;
     int         K = 1024;
@@ -32,16 +34,16 @@ struct ExperimentConfig {
     int         repeats        = 20;
 
     int         warmups        = 2;
-
     int         frag_cap       = 0;
 
     int         num_samples    = 0;
 
     bool        reseed_per_trial = false;
 
+    std::string encoding_mode = "amortized";
+
     std::string scheme         = "online";
     std::string inject         = "none";
-
     std::string swifi_zone     = "any";
     bool        baseline_only  = false;
     bool        calibrate      = false;
@@ -54,9 +56,9 @@ struct ExperimentConfig {
     uint64_t    seed_b = 987654;
 
     std::string csv_path        = "abft_metrics.csv";
-
     std::string calib_diffs_path = "abft_calibration_diffs.csv";
 };
+
 
 struct InjectionInfo {
     bool  injected     = false;

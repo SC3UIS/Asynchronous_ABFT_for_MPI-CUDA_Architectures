@@ -36,6 +36,7 @@ F=${F:-8}
 R=${R:-1}
 WARMUPS=${WARMUPS:-2}
 SAFETY=${SAFETY:-10}
+ENC_FLAG=(--encoding-mode overlap)
 
 SWEEP_N=${SWEEP_N:-40}
 SWEEP_SAMPLES=${SWEEP_SAMPLES:-20}
@@ -90,8 +91,8 @@ SWEEP_TAU="1.0"
 for S in "${SWEEP_SIZES[@]}"; do
   echo "###  sweep ${S}^3"
   run "SWEEP baseline ${S}^3" ${S} ${S} ${S} --baseline                     "${SWEEP_COMMON[@]}"
-  run "SWEEP online  ${S}^3"  ${S} ${S} ${S} --inject none --threshold ${SWEEP_TAU} "${SWEEP_COMMON[@]}"
-  run "SWEEP online+add ${S}^3" ${S} ${S} ${S} --inject add  --threshold ${SWEEP_TAU} "${SWEEP_COMMON[@]}"
+  run "SWEEP online  ${S}^3"  ${S} ${S} ${S} --inject none --threshold ${SWEEP_TAU} "${ENC_FLAG[@]}" "${SWEEP_COMMON[@]}"
+  run "SWEEP online+add ${S}^3" ${S} ${S} ${S} --inject add  --threshold ${SWEEP_TAU} "${ENC_FLAG[@]}" "${SWEEP_COMMON[@]}"
 done
 
 echo "############################################"
@@ -103,8 +104,8 @@ SWEEP_COMMON_NS=("${SWEEP_COMMON[@]}" --csv abft_metrics_ns.csv)
 for S in "${SWEEP_SIZES[@]}"; do
   echo "###  sweep_ns ${S}x${SWEEP_K_NS}x${S}"
   run "SWEEP_NS baseline ${S}x${SWEEP_K_NS}x${S}"   ${S} ${SWEEP_K_NS} ${S} --baseline                     "${SWEEP_COMMON_NS[@]}"
-  run "SWEEP_NS online   ${S}x${SWEEP_K_NS}x${S}"   ${S} ${SWEEP_K_NS} ${S} --inject none --threshold ${SWEEP_TAU} "${SWEEP_COMMON_NS[@]}"
-  run "SWEEP_NS online+add ${S}x${SWEEP_K_NS}x${S}" ${S} ${SWEEP_K_NS} ${S} --inject add  --threshold ${SWEEP_TAU} "${SWEEP_COMMON_NS[@]}"
+  run "SWEEP_NS online   ${S}x${SWEEP_K_NS}x${S}"   ${S} ${SWEEP_K_NS} ${S} --inject none --threshold ${SWEEP_TAU} "${ENC_FLAG[@]}" "${SWEEP_COMMON_NS[@]}"
+  run "SWEEP_NS online+add ${S}x${SWEEP_K_NS}x${S}" ${S} ${SWEEP_K_NS} ${S} --inject add  --threshold ${SWEEP_TAU} "${ENC_FLAG[@]}" "${SWEEP_COMMON_NS[@]}"
 done
 
 echo "############################################"
@@ -134,7 +135,7 @@ for S in "${CM_SIZES[@]}"; do
 
   for z in "${ZONES[@]}"; do
     run "CM online/swifi[${z}] ${S}^3" ${S} ${S} ${S} \
-        --inject swifi --swifi-zone "${z}" "${TH[@]}" "${CM_COMMON[@]}"
+        --inject swifi --swifi-zone "${z}" "${TH[@]}" "${ENC_FLAG[@]}" "${CM_COMMON[@]}"
   done
 done
 

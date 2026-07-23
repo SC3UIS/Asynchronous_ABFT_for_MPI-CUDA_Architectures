@@ -2,6 +2,7 @@
 
 #include "../core/common.cuh"
 #include "../distribution/grid.cuh"
+#include "../kernels/abft_stepwise.cuh"
 
 struct PipelineBuffers {
     int F;
@@ -21,6 +22,8 @@ struct PipelineBuffers {
     double* dRowSumB     = nullptr;
     double* dExpectedCol = nullptr;
     double* dActualCol   = nullptr;
+
+    double* dEncPart     = nullptr;
 
     int* dCM        = nullptr;
     int* dNRestored = nullptr;
@@ -65,6 +68,8 @@ inline void buffers_init(PipelineBuffers& b, int F, int M_b, int N_b, int K, int
     CUDA_CHECK(cudaMalloc(&b.dActualCol,   sizeof(double) * M_b));
     CUDA_CHECK(cudaMalloc(&b.dCM,          sizeof(int)    * 4));
     CUDA_CHECK(cudaMalloc(&b.dNRestored,   sizeof(int)));
+    CUDA_CHECK(cudaMalloc(&b.dEncPart,
+                          sizeof(double) * (size_t)ENC_CHUNKS * (K > N_b ? K : N_b)));
     b.dGolden = nullptr;
 
     CUDA_CHECK(cudaStreamCreate(&b.compute_stream));
@@ -88,6 +93,7 @@ inline void buffers_free(PipelineBuffers& b) {
     cudaFree(b.dActualCol);
     cudaFree(b.dCM);
     cudaFree(b.dNRestored);
+    cudaFree(b.dEncPart);
     if (b.dGolden) cudaFree(b.dGolden);
 
     cudaStreamDestroy(b.compute_stream);

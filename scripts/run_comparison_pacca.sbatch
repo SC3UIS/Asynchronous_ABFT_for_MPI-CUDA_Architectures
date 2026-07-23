@@ -141,6 +141,8 @@ OUR_THRESHOLD="1.0"; OUR_F=8; OUR_R=1
 OUR_SAMPLES=${OUR_SAMPLES:-15}
 THEIRS_SAMPLES=${THEIRS_SAMPLES:-3}
 WARMUPS=${WARMUPS:-5}
+ENCODING=${ENCODING:-overlap}
+OUR_ENC_FLAG="--encoding-mode ${ENCODING}"
 CUDA_ARCH="80"
 THEIRS_DIR="Fault-Tolerant-SGEMM-on-NVIDIA-GPUs"
 _SUFFIX="${OUT_TAG:+_${OUT_TAG}}"
@@ -273,7 +275,7 @@ run_shape() {
     echo "  [stage] calling run_ours(none) for ${M}x${K}x${N}"
     set +e
     run_ours ${M} ${K} ${N} --inject none --threshold ${OUR_THRESHOLD} \
-         --grid 1 1 --frags-per-rank ${OUR_F} \
+         --grid 1 1 --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} \
          --samples ${OUR_SAMPLES} --repeats ${OUR_R} \
          --warmups ${WU} --csv abft_metrics_cmp.csv > /dev/null
     local _ru_rc=$?
@@ -296,7 +298,7 @@ run_shape() {
 
     rm -f abft_metrics_inj.csv
     if run_ours ${M} ${K} ${N} --inject add --threshold ${OUR_THRESHOLD} \
-         --grid 1 1 --frags-per-rank ${OUR_F} \
+         --grid 1 1 --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} \
          --samples ${OUR_SAMPLES} --repeats ${OUR_R} \
          --warmups ${WU} --csv abft_metrics_inj.csv > /dev/null; then
         local oi_g oi_t

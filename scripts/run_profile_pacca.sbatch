@@ -143,7 +143,9 @@ REGIMES=( "small_sq:1024 1024 1024"
           "big_sq:8192 8192 8192"
           "small_ns:1024 512 384"
           "big_ns:8192 4096 2048" )
-OUR_THRESHOLD="1.0"; OUR_F=8; OUR_R=3
+OUR_THRESHOLD="1.0"; OUR_F=8; OUR_R=1
+ENCODING=${ENCODING:-overlap}
+OUR_ENC_FLAG="--encoding-mode ${ENCODING}"
 THEIR_KERNEL=16; CUDA_ARCH="80"
 THEIRS_DIR="Fault-Tolerant-SGEMM-on-NVIDIA-GPUs"
 OUTDIR="scripts/profile"; mkdir -p "${OUTDIR}"
@@ -212,7 +214,7 @@ for entry in "${REGIMES[@]}"; do
     profile_one "${regime}_ours_online" \
         ${OURS_LAUNCH} ./abft_gemm ${M} ${K} ${N} --inject none \
             --threshold ${OUR_THRESHOLD} --grid 1 1 \
-            --frags-per-rank ${OUR_F} --repeats ${OUR_R}
+            --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} --repeats ${OUR_R}
 done
 
 mkdir -p scripts/plots/profile
@@ -261,7 +263,7 @@ PY
                   "${SWEEP_DIR}/sweep_${S}_ours.csv" \
                   ${OURS_LAUNCH} ./abft_gemm ${S} ${S} ${S} --inject none \
                   --threshold ${OUR_THRESHOLD} --grid 1 1 \
-                  --frags-per-rank ${OUR_F} --repeats ${OUR_R}
+                  --frags-per-rank ${OUR_F} ${OUR_ENC_FLAG} --repeats ${OUR_R}
     og=$(real_gflops "${SWEEP_DIR}/sweep_${S}_ours.csv" "")
     [[ -n "${og}" ]] && echo "${S},${S},${S},ours_online,${og}" >> "${SWEEP_CSV}"
   done

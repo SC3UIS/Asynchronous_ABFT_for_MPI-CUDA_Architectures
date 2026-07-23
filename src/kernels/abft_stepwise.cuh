@@ -13,6 +13,51 @@ __global__ inline void k_col_checksum_A(const float* __restrict__ A, int lda,
     }
 }
 
+constexpr int ENC_CHUNKS = 32;
+
+__global__ inline void k_col_checksum_A_part(const float* __restrict__ A, int lda,
+                                             double* __restrict__ part,
+                                             int M, int K) {
+    int k = blockIdx.x * blockDim.x + threadIdx.x;
+    int p = blockIdx.y;
+    if (k < K) {
+        int chunk = (M + gridDim.y - 1) / gridDim.y;
+        int i0 = p * chunk;
+        int i1 = i0 + chunk; if (i1 > M) i1 = M;
+        double s = 0.0;
+        for (int i = i0; i < i1; ++i) s += static_cast<double>(A[(size_t)i * lda + k]);
+        part[(size_t)p * K + k] = s;
+    }
+}
+
+__global__ inline void k_expected_row_part(const double* __restrict__ colSumA,
+                                           const float*  __restrict__ B_frag, int ldb,
+                                           double*       __restrict__ part,
+                                           int K, int N_frag) {
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    int p = blockIdx.y;
+    if (j < N_frag) {
+        int chunk = (K + gridDim.y - 1) / gridDim.y;
+        int k0 = p * chunk;
+        int k1 = k0 + chunk; if (k1 > K) k1 = K;
+        double s = 0.0;
+        for (int k = k0; k < k1; ++k)
+            s += colSumA[k] * static_cast<double>(B_frag[(size_t)k * ldb + j]);
+        part[(size_t)p * N_frag + j] = s;
+    }
+}
+
+__global__ inline void k_reduce_enc_part(const double* __restrict__ part,
+                                         double* __restrict__ out,
+                                         int n, int chunks) {
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j < n) {
+        double s = 0.0;
+        for (int p = 0; p < chunks; ++p) s += part[(size_t)p * n + j];
+        out[j] = s;
+    }
+}
+
 __global__ inline void k_row_checksum_B(const float* __restrict__ B_frag, int ldb,
                                         double* __restrict__ rowSumB,
                                         int K, int N_frag) {
@@ -74,6 +119,7 @@ __global__ inline void k_correct_element(float* C_frag, int ldc,
                                          int row, int col, float value) {
     C_frag[row * ldc + col] = value;
 }
+
 
 __global__ inline void k_detect_row(const double* __restrict__ expectedRow,
                                     const double* __restrict__ actualRow,
@@ -229,19 +275,34 @@ inline void launch_localize_correct(const float* dA, int lda,
         dC_frag, ldc, dGolden, ldg, frag_col_offset, injected, dNRestored);
 }
 
+
 inline void launch_col_checksum_A(const float* dA, int lda,
                                   double* dColSumA,
-                                  int M, int K, cudaStream_t stream) {
+                                  int M, int K, cudaStream_t stream,
+                                  double* dEncPart = nullptr) {
     int t = 256, b = (K + t - 1) / t;
-    k_col_checksum_A<<<b, t, 0, stream>>>(dA, lda, dColSumA, M, K);
+    if (dEncPart == nullptr) {
+        k_col_checksum_A<<<b, t, 0, stream>>>(dA, lda, dColSumA, M, K);
+        return;
+    }
+    dim3 grid(b, ENC_CHUNKS);
+    k_col_checksum_A_part<<<grid, t, 0, stream>>>(dA, lda, dEncPart, M, K);
+    k_reduce_enc_part<<<b, t, 0, stream>>>(dEncPart, dColSumA, K, ENC_CHUNKS);
 }
 
 inline void launch_expected_row(const double* dColSumA,
                                 const float* dB_frag, int ldb,
                                 double* dExpectedRow,
-                                int K, int N_frag, cudaStream_t stream) {
+                                int K, int N_frag, cudaStream_t stream,
+                                double* dEncPart = nullptr) {
     int t = 256, b = (N_frag + t - 1) / t;
-    k_expected_row<<<b, t, 0, stream>>>(dColSumA, dB_frag, ldb, dExpectedRow, K, N_frag);
+    if (dEncPart == nullptr) {
+        k_expected_row<<<b, t, 0, stream>>>(dColSumA, dB_frag, ldb, dExpectedRow, K, N_frag);
+        return;
+    }
+    dim3 grid(b, ENC_CHUNKS);
+    k_expected_row_part<<<grid, t, 0, stream>>>(dColSumA, dB_frag, ldb, dEncPart, K, N_frag);
+    k_reduce_enc_part<<<b, t, 0, stream>>>(dEncPart, dExpectedRow, N_frag, ENC_CHUNKS);
 }
 
 inline void launch_actual_row(const float* dC_frag, int ldc,

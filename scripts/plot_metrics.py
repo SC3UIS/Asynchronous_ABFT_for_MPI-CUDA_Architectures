@@ -92,21 +92,21 @@ def plot_gflops_vs_size(df: pd.DataFrame, out_dir: Path):
     max_x = 0
     bx, bsub = _series_by_size(df, nz & (df["baseline_only"] == 1))
     if bx:
-        ax.plot(bx, bsub["baseline_gflops_median"], "-o", color="tab:green",
+        ax.plot(bx, bsub["baseline_gflops_mean"], "-o", color="tab:green",
                 lw=2.2, ms=6, label="baseline cuBLAS"); plotted = True
         max_x = max(max_x, max(bx))
     nx, nsub = _series_by_size(df, nz & (df["inject"] == "none")
                                    & (df["baseline_only"] == 0))
     if nx:
         if not bx:
-            ax.plot(nx, nsub["baseline_gflops_median"], "-o",
+            ax.plot(nx, nsub["baseline_gflops_mean"], "-o",
                     color="tab:green", lw=2.2, ms=6, label="baseline cuBLAS")
-        ax.plot(nx, nsub["protected_gflops_median"], "-D", color="tab:red",
+        ax.plot(nx, nsub["protected_gflops_mean"], "-D", color="tab:red",
                 lw=2.2, ms=6, label="ABFT (no fault)"); plotted = True
         max_x = max(max_x, max(nx))
     ax_, asub = _series_by_size(df, nz & (df["inject"] == "add"))
     if ax_:
-        ax.plot(ax_, asub["protected_gflops_median"], "--s",
+        ax.plot(ax_, asub["protected_gflops_mean"], "--s",
                 color="tab:orange", lw=2.2, ms=6,
                 label="ABFT (fault)"); plotted = True
         max_x = max(max_x, max(ax_))
@@ -114,7 +114,7 @@ def plot_gflops_vs_size(df: pd.DataFrame, out_dir: Path):
         plt.close(fig); return
     ax.set_xlim(0, max_x * 1.03 if max_x > 0 else None)
     ax.set_xlabel("Matrix size  (M=N=K)")
-    ax.set_ylabel("GFLOPS (median)")
+    ax.set_ylabel("GFLOPS (mean)")
     ax.set_title("Throughput vs size — baseline vs ABFT (±fault)")
     ax.grid(True, alpha=0.3); ax.legend()
     fig.tight_layout()
@@ -156,8 +156,13 @@ def plot_time_vs_size(df: pd.DataFrame, out_dir: Path):
     plt.close(fig)
 
 def plot_runtime_overhead_vs_size(df: pd.DataFrame, out_dir: Path):
-    """ABFT runtime overhead (%) vs our cuBLAS baseline — no-fault + fault."""
+    """ABFT runtime overhead (%) vs our cuBLAS baseline — no-fault + fault.
+    Measured against the standalone baseline phase (the curve shown in the
+    throughput figure) when present; falls back to the per-run
+    ``overhead_pct`` column otherwise."""
     nz = (df["calibrate"] == 0)
+    bx, bsub = _series_by_size(df, nz & (df["baseline_only"] == 1))
+    base_ms = dict(zip(bx, bsub["baseline_mean_ms"]))
     fig, ax = plt.subplots(figsize=(9, 5))
     any_ = False
     for inj, sty, col, lab in (
@@ -167,7 +172,13 @@ def plot_runtime_overhead_vs_size(df: pd.DataFrame, out_dir: Path):
         xs, sub = _series_by_size(df, nz & (df["inject"] == inj)
                                       & (df["baseline_only"] == 0))
         if xs:
-            ax.plot(xs, sub["overhead_pct"], sty, color=col, lw=2.2, ms=6,
+            if base_ms:
+                prot = sub["protected_mean_ms"].to_numpy(dtype=float)
+                ref = np.array([base_ms.get(x, np.nan) for x in xs])
+                ov = (prot / ref - 1.0) * 100.0
+            else:
+                ov = sub["overhead_pct"]
+            ax.plot(xs, ov, sty, color=col, lw=2.2, ms=6,
                     label=lab); any_ = True
     if not any_:
         plt.close(fig); return
@@ -185,8 +196,12 @@ def plot_runtime_overhead_vs_size(df: pd.DataFrame, out_dir: Path):
 def plot_gflops_overhead_vs_size(df: pd.DataFrame, out_dir: Path):
     """ABFT GFLOPS overhead (%) vs our cuBLAS baseline — no-fault + fault.
     overhead_gflops% = (gflops_baseline / gflops_abft - 1) * 100, the
-    throughput-degradation counterpart of the runtime overhead plot."""
+    throughput-degradation counterpart of the runtime overhead plot.
+    Uses the standalone baseline phase when present (same reference as the
+    throughput figure); falls back to the per-run baseline otherwise."""
     nz = (df["calibrate"] == 0)
+    bx, bsub = _series_by_size(df, nz & (df["baseline_only"] == 1))
+    base_gf = dict(zip(bx, bsub["baseline_gflops_mean"]))
     fig, ax = plt.subplots(figsize=(9, 5))
     any_ = False
     for inj, sty, col, lab in (
@@ -196,8 +211,12 @@ def plot_gflops_overhead_vs_size(df: pd.DataFrame, out_dir: Path):
         xs, sub = _series_by_size(df, nz & (df["inject"] == inj)
                                       & (df["baseline_only"] == 0))
         if xs:
-            base = sub["baseline_gflops_median"].to_numpy()
-            prot = sub["protected_gflops_median"].to_numpy()
+            if base_gf:
+                base = np.array([base_gf.get(x, np.nan) for x in xs])
+                prot = sub["protected_gflops_mean"].to_numpy(dtype=float)
+            else:
+                base = sub["baseline_gflops_median"].to_numpy()
+                prot = sub["protected_gflops_median"].to_numpy()
             with np.errstate(divide="ignore", invalid="ignore"):
                 ov = np.where(prot > 0, (base / prot - 1.0) * 100.0, 0.0)
             ax.plot(xs, ov, sty, color=col, lw=2.2, ms=6, label=lab)

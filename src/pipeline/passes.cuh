@@ -8,6 +8,7 @@
 #include "../metrics/metrics.cuh"
 #include "buffers.cuh"
 
+
 inline double pass_baseline(PipelineBuffers& b,
                             const float* dA, int lda,
                             const float* dB, int ldb,
@@ -50,7 +51,8 @@ inline double pass_calibrate(PipelineBuffers& b,
     }
     CUDA_CHECK(cudaStreamSynchronize(b.compute_stream));
 
-    launch_col_checksum_A(dA, lda, b.dColSumA, M_b, K, b.verify_stream);
+    launch_col_checksum_A(dA, lda, b.dColSumA, M_b, K, b.verify_stream,
+                          b.dEncPart);
     CUDA_CHECK(cudaStreamSynchronize(b.verify_stream));
 
     std::vector<double> hExp(b.N_frag_max), hAct(b.N_frag_max);
@@ -58,7 +60,8 @@ inline double pass_calibrate(PipelineBuffers& b,
         int N_frag = b.col_counts[f];
         int off    = b.col_offsets[f];
         launch_expected_row(b.dColSumA, dB + off, ldb,
-                            b.dExpectedRow[f], K, N_frag, b.verify_stream);
+                            b.dExpectedRow[f], K, N_frag, b.verify_stream,
+                            b.dEncPart);
         launch_actual_row  (dC + off,   ldc,    b.dActualRow  [f],
                             M_b, N_frag, b.verify_stream);
         CUDA_CHECK(cudaMemcpyAsync(hExp.data(), b.dExpectedRow[f],
@@ -80,6 +83,7 @@ inline double pass_calibrate(PipelineBuffers& b,
     return std::chrono::duration<double, std::milli>(t1 - t0).count();
 }
 
+
 inline void pass_online_loop(PipelineBuffers& b,
                              const float* dA, int lda,
                              const float* dB, int ldb,
@@ -94,9 +98,9 @@ inline void pass_online_loop(PipelineBuffers& b,
                              std::vector<double>& out_iter_ms,
                              ConfusionMatrix& cm,
                              int& n_restored,
-                             double& out_total_ms) {
+                             double& out_total_ms,
+                             const std::string& encoding_mode = "amortized") {
     float* dC_bufs[2] = { dC_buf0, dC_buf1 };
-
     const bool inject_on  = (inject_mode == "swifi" || inject_mode == "add");
     const bool do_localize = inject_on;
 
@@ -108,26 +112,42 @@ inline void pass_online_loop(PipelineBuffers& b,
                               cudaMemcpyHostToDevice));
     }
 
-    launch_col_checksum_A(dA, lda, b.dColSumA, M_b, K, b.verify_stream);
-    for (int f = 0; f < b.F; ++f) {
-        int N_frag = b.col_counts[f];
-        int off    = b.col_offsets[f];
-        launch_expected_row(b.dColSumA, dB + off, ldb,
-                            b.dExpectedRow[f], K, N_frag, b.verify_stream);
-    }
-
-    CUDA_CHECK(cudaMemsetAsync(b.dCM, 0, sizeof(int) * 4, b.verify_stream));
-    CUDA_CHECK(cudaMemsetAsync(b.dNRestored, 0, sizeof(int), b.verify_stream));
-    CUDA_CHECK(cudaStreamSynchronize(b.verify_stream));
-
     cudaEvent_t buf_verify_done[2];
     bool buf_event_used[2] = { false, false };
     for (int i = 0; i < 2; ++i)
         CUDA_CHECK(cudaEventCreateWithFlags(&buf_verify_done[i],
                                             cudaEventDisableTiming));
 
-    MPI_CHECK(MPI_Barrier(MPI_COMM_WORLD));
-    auto loop_t0 = clk::now();
+    auto enqueue_encode = [&]() {
+        launch_col_checksum_A(dA, lda, b.dColSumA, M_b, K, b.verify_stream,
+                              b.dEncPart);
+        for (int f = 0; f < b.F; ++f) {
+            int N_frag = b.col_counts[f];
+            int off    = b.col_offsets[f];
+            launch_expected_row(b.dColSumA, dB + off, ldb,
+                                b.dExpectedRow[f], K, N_frag, b.verify_stream,
+                                b.dEncPart);
+        }
+        CUDA_CHECK(cudaMemsetAsync(b.dCM, 0, sizeof(int) * 4, b.verify_stream));
+        CUDA_CHECK(cudaMemsetAsync(b.dNRestored, 0, sizeof(int), b.verify_stream));
+    };
+
+    clk::time_point loop_t0;
+    if (encoding_mode == "timed") {
+        MPI_CHECK(MPI_Barrier(MPI_COMM_WORLD));
+        loop_t0 = clk::now();
+        enqueue_encode();
+        CUDA_CHECK(cudaStreamSynchronize(b.verify_stream));
+    } else if (encoding_mode == "overlap") {
+        MPI_CHECK(MPI_Barrier(MPI_COMM_WORLD));
+        loop_t0 = clk::now();
+        enqueue_encode();
+    } else {
+        enqueue_encode();
+        CUDA_CHECK(cudaStreamSynchronize(b.verify_stream));
+        MPI_CHECK(MPI_Barrier(MPI_COMM_WORLD));
+        loop_t0 = clk::now();
+    }
 
     for (int it = 0; it < repeats; ++it) {
         int buf_idx = it % 2;
@@ -179,7 +199,6 @@ inline void pass_online_loop(PipelineBuffers& b,
                               b.dErrCol + f, b.dRowDiff + f,
                               injected, b.dCM, b.verify_stream);
             if (do_localize) {
-
                 launch_localize_correct(dA, lda, dB + off, ldb,
                                         dC + off, ldc,
                                         b.dRowSumB, b.dExpectedCol,

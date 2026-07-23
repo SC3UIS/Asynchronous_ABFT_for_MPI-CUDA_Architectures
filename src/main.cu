@@ -1,3 +1,4 @@
+
 #include "core/common.cuh"
 #include "core/types.cuh"
 #include "core/cli.cuh"
@@ -91,6 +92,8 @@ int main(int argc, char** argv) {
             std::cout << "Threshold      : " << cfg.threshold_override << " (override)\n";
         else
             std::cout << "Threshold      : (per-fragment, formula)\n";
+        if (!cfg.baseline_only && !cfg.calibrate)
+            std::cout << "Encoding       : " << cfg.encoding_mode << "\n";
         std::cout << "GPUs visible   : " << num_gpus << "\n\n";
     }
 
@@ -175,7 +178,6 @@ int main(int argc, char** argv) {
                               && cfg.inject == "swifi");
 
     if (cfg.calibrate) {
-
         for (int it = 0; it < cfg.repeats; ++it) {
             double t = pass_calibrate(buf, dA, lda, dB, ldb, dC_buf0, ldc,
                                       M_b, cfg.K, N_b,
@@ -183,12 +185,10 @@ int main(int argc, char** argv) {
             protected_samples.push_back(t);
         }
     } else {
-
         for (int t = 0; t < TOTAL_TRIALS; ++t) {
             const bool record = (t >= NUM_WARMUP_TRIALS);
 
             if (cfg.reseed_per_trial) {
-
                 uint64_t s_a = cfg.seed_a + (uint64_t)t * 1000003ull;
                 uint64_t s_b = cfg.seed_b + (uint64_t)t * 1000033ull;
                 regen_inputs(s_a, s_b);
@@ -230,7 +230,8 @@ int main(int argc, char** argv) {
                              C_golden,
                              cfg.repeats,
                              iter_ms_unused, cm_trial,
-                             n_restored_trial, total_ms);
+                             n_restored_trial, total_ms,
+                             cfg.encoding_mode);
             if (record) {
                 protected_samples.push_back(total_ms / cfg.repeats);
                 cm_local.TP += cm_trial.TP;
